@@ -13,6 +13,7 @@ import Courses from "./pages/Courses";
 import MyCourses from "./pages/MyCourses";
 import Points from "./pages/Points";
 import Offers from "./pages/Offers";
+import Quiz from "./pages/Quiz";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCourses from "./pages/admin/AdminCourses";
 import AdminNotifications from "./pages/admin/AdminNotifications";
@@ -58,6 +59,7 @@ function AppRoutes() {
       <Route path="/my-courses" element={<ProtectedRoute><MyCourses /></ProtectedRoute>} />
       <Route path="/points" element={<ProtectedRoute><Points /></ProtectedRoute>} />
       <Route path="/offers" element={<ProtectedRoute><Offers /></ProtectedRoute>} />
+      <Route path="/quiz/:courseId" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

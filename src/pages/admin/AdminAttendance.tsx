@@ -3,48 +3,22 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-    Calendar,
-    Users,
-    Plus,
-    CheckCircle2,
-    XCircle,
-    User,
-    ChevronLeft,
-    ChevronRight,
-    Loader2
-} from "lucide-react";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
+import { Calendar, Users, Plus, CheckCircle2, XCircle, User, ChevronLeft, ChevronRight,Loader2} from "lucide-react";
+import { Dialog,DialogContent,DialogDescription,DialogHeader, DialogTitle, DialogFooter,} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
-
+import { updateStudentLevelAutomatically } from "@/utils/leveling";
 interface Batch {
     id: string;
     name: string;
     course_id: string;
-    courses: {
-        title: string;
-    };
+    courses: {  title: string;  };
 }
-
 interface CourseSession {
     id: string;
     batch_id: string;
@@ -52,19 +26,14 @@ interface CourseSession {
     session_date: string;
     duration_hours: number;
 }
-
 interface EnrollmentWithProfile {
     user_id: string;
-    profiles: {
-        full_name: string | null;
-    };
+    profiles: { full_name: string | null; };
 }
-
 interface Attendance {
     user_id: string;
     attended: boolean;
 }
-
 export default function AdminAttendance() {
     const { t, dir } = useLanguage();
     const { toast } = useToast();
@@ -72,20 +41,17 @@ export default function AdminAttendance() {
     const [batches, setBatches] = useState<Batch[]>([]);
     const [selectedBatchId, setSelectedBatchId] = useState<string>("");
     const [sessions, setSessions] = useState<CourseSession[]>([]);
-
     const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
     const [newSession, setNewSession] = useState({
         title: "",
         date: new Date().toISOString().split('T')[0],
         duration: 1
     });
-
     const [isMarkAttendanceOpen, setIsMarkAttendanceOpen] = useState(false);
     const [selectedSession, setSelectedSession] = useState<CourseSession | null>(null);
     const [students, setStudents] = useState<EnrollmentWithProfile[]>([]);
     const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({});
     const [savingAttendance, setSavingAttendance] = useState(false);
-
     useEffect(() => {
         fetchBatches();
     }, []);
@@ -172,7 +138,6 @@ export default function AdminAttendance() {
         setAttendanceMap({});
 
         try {
-            // Fetch students in this batch
             const { data: studentsData, error: studentsError } = await supabase
                 .from('enrollments')
                 .select('user_id, profiles(full_name)')
@@ -180,8 +145,6 @@ export default function AdminAttendance() {
 
             if (studentsError) throw studentsError;
             setStudents((studentsData as any[]) || []);
-
-            // Fetch existing attendance for this session
             const { data: attData, error: attError } = await supabase
                 .from('attendance')
                 .select('user_id, attended')
@@ -206,10 +169,8 @@ export default function AdminAttendance() {
     const handleToggleAttendance = (userId: string, attended: boolean) => {
         setAttendanceMap(prev => ({ ...prev, [userId]: attended }));
     };
-
     const saveAttendance = async () => {
         if (!selectedSession) return;
-
         try {
             setSavingAttendance(true);
             const attendanceData = students.map(student => ({
@@ -222,8 +183,10 @@ export default function AdminAttendance() {
             const { error } = await supabase
                 .from('attendance')
                 .upsert(attendanceData, { onConflict: 'session_id, user_id' });
-
             if (error) throw error;
+            await Promise.all(
+                students.map(student => updateStudentLevelAutomatically(student.user_id))
+            );
 
             toast({ title: t.adminAttendance.saveSuccess });
             setIsMarkAttendanceOpen(false);
@@ -239,11 +202,9 @@ export default function AdminAttendance() {
     };
 
     const ArrowIcon = dir === 'rtl' ? ChevronLeft : ChevronRight;
-
     return (
         <DashboardLayout>
             <div className="space-y-8">
-                {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-display font-bold mb-2">{t.nav.attendance}</h1>
@@ -256,8 +217,6 @@ export default function AdminAttendance() {
                         </Button>
                     )}
                 </div>
-
-                {/* Batch Selection */}
                 <Card className="border-accent/10">
                     <CardHeader className="pb-3">
                         <CardTitle className="text-lg flex items-center gap-2">
@@ -281,7 +240,6 @@ export default function AdminAttendance() {
                     </CardContent>
                 </Card>
 
-                {/* Sessions List */}
                 {selectedBatchId ? (
                     <div className="space-y-4">
                         {sessions.length > 0 ? (
@@ -299,8 +257,7 @@ export default function AdminAttendance() {
                                             <Button
                                                 variant="outline"
                                                 className="w-full justify-between hover:bg-accent/5 hover:text-accent border-accent/20"
-                                                onClick={() => openMarkAttendance(session)}
-                                            >
+                                                onClick={() => openMarkAttendance(session)}>
                                                 {t.adminAttendance.markAttendance}
                                                 <ArrowIcon className="w-4 h-4" />
                                             </Button>
@@ -321,7 +278,6 @@ export default function AdminAttendance() {
                     </div>
                 )}
 
-                {/* Add Session Dialog */}
                 <Dialog open={isAddSessionOpen} onOpenChange={setIsAddSessionOpen}>
                     <DialogContent>
                         <DialogHeader>
@@ -366,7 +322,6 @@ export default function AdminAttendance() {
                     </DialogContent>
                 </Dialog>
 
-                {/* Mark Attendance Dialog */}
                 <Dialog open={isMarkAttendanceOpen} onOpenChange={setIsMarkAttendanceOpen}>
                     <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
                         <DialogHeader className="p-6 pb-2">

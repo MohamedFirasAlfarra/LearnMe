@@ -126,7 +126,7 @@ export default function Auth() {
       <div className="hidden lg:flex lg:w-1/2 gradient-hero p-12 flex-col justify-between">
         <div>
           <h1 className="text-4xl font-display font-bold text-primary-foreground mb-2">
-            LearnMe
+            Devixa
           </h1>
           <p className="text-primary-foreground/80 text-lg">
             {t.auth.brandTagline}
@@ -149,7 +149,7 @@ export default function Auth() {
         </div>
 
         <p className="text-primary-foreground/60 text-sm">
-          © 2024 LearnMe. {t.auth.copyright}.
+          © {new Date().getFullYear()} Devixa. {t.auth.copyright}.
         </p>
       </div>
 
@@ -162,7 +162,7 @@ export default function Auth() {
           <Card className="border-0 shadow-lg">
             <CardHeader className="text-center pb-2">
               <div className="lg:hidden mb-4">
-                <h1 className="text-2xl font-display font-bold text-primary">LearnMe</h1>
+                <h1 className="text-2xl font-display font-bold text-primary">Devixa</h1>
               </div>
               <CardTitle className="text-2xl font-display">
                 {isLogin ? t.auth.welcomeBack : t.auth.createAccount}

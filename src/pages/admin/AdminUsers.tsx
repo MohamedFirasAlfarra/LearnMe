@@ -16,7 +16,8 @@ import {
     Clock,
     ChevronRight,
     History,
-    GraduationCap
+    GraduationCap,
+    Trophy
 } from "lucide-react";
 import {
     Dialog,
@@ -25,6 +26,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -32,6 +40,7 @@ interface Profile {
     full_name: string | null;
     email: string | null;
     total_points: number | null;
+    student_level: string | null;
     created_at: string;
 }
 
@@ -140,6 +149,33 @@ export default function AdminUsers() {
     const activeEnrollments = userDetails.enrollments.filter(e => e.progress_percentage < 100);
     const completedEnrollments = userDetails.enrollments.filter(e => e.progress_percentage === 100);
 
+    const handleLevelChange = async (newLevel: string) => {
+        if (!selectedUser) return;
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ student_level: newLevel })
+                .eq('id', selectedUser.id);
+
+            if (error) throw error;
+
+            setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, student_level: newLevel } : u));
+            setSelectedUser(prev => prev ? { ...prev, student_level: newLevel } : null);
+
+            toast({
+                title: t.common.success,
+                description: "Student level updated successfully",
+            });
+        } catch (error: any) {
+            toast({
+                title: t.common.error,
+                description: error.message,
+                variant: "destructive",
+            });
+        }
+    };
+
     return (
         <DashboardLayout>
             <div className="space-y-8">
@@ -222,18 +258,40 @@ export default function AdminUsers() {
                         ) : (
                             <div className="space-y-6 py-4">
                                 {/* Stats Overview */}
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div className="p-4 rounded-xl bg-accent/5 border border-accent/10 flex flex-col items-center text-center">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/10 flex flex-col items-center justify-center text-center">
+                                        <Trophy className={`w-5 h-5 mb-1 ${selectedUser?.student_level === 'advanced' ? 'text-amber-500' :
+                                            selectedUser?.student_level === 'intermediate' ? 'text-blue-500' :
+                                                'text-slate-400'
+                                            }`} />
+                                        <div className="w-full">
+                                            <Select
+                                                value={selectedUser?.student_level || 'beginner'}
+                                                onValueChange={handleLevelChange}
+                                            >
+                                                <SelectTrigger className="h-8 border-none bg-transparent hover:bg-muted/50 transition-colors py-0 text-center justify-center font-bold">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="beginner">{t.common.beginner}</SelectItem>
+                                                    <SelectItem value="intermediate">{t.common.intermediate}</SelectItem>
+                                                    <SelectItem value="advanced">{t.common.advanced}</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{t.common.level}</span>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-accent/5 border border-accent/10 flex flex-col items-center justify-center text-center">
                                         <Star className="w-5 h-5 text-accent mb-1" />
                                         <span className="text-lg font-bold">{selectedUser?.total_points || 0}</span>
                                         <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{t.adminUsers.points}</span>
                                     </div>
-                                    <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex flex-col items-center text-center">
+                                    <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex flex-col items-center justify-center text-center">
                                         <BookOpen className="w-5 h-5 text-blue-500 mb-1" />
                                         <span className="text-lg font-bold">{activeEnrollments.length}</span>
                                         <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{t.adminUsers.activeCourses}</span>
                                     </div>
-                                    <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10 flex flex-col items-center text-center">
+                                    <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10 flex flex-col items-center justify-center text-center">
                                         <CheckCircle2 className="w-5 h-5 text-green-500 mb-1" />
                                         <span className="text-lg font-bold">{completedEnrollments.length}</span>
                                         <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{t.adminUsers.completedCourses}</span>
@@ -311,6 +369,6 @@ export default function AdminUsers() {
                     </DialogContent>
                 </Dialog>
             </div>
-        </DashboardLayout>
+        </DashboardLayout >
     );
 }

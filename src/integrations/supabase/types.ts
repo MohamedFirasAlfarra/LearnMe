@@ -134,6 +134,44 @@ export type Database = {
           },
         ]
       }
+      course_quizzes: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          passing_score: number
+          reward_points: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          passing_score?: number
+          reward_points?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          passing_score?: number
+          reward_points?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_quizzes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: true
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_sessions: {
         Row: {
           batch_id: string
@@ -168,6 +206,76 @@ export type Database = {
             columns: ["batch_id"]
             isOneToOne: false
             referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          correct_option_index: number
+          created_at: string
+          id: string
+          options: Json
+          question_text: string
+          quiz_id: string
+        }
+        Insert: {
+          correct_option_index: number
+          created_at?: string
+          id?: string
+          options: Json
+          question_text: string
+          quiz_id: string
+        }
+        Update: {
+          correct_option_index?: number
+          created_at?: string
+          id?: string
+          options?: Json
+          question_text?: string
+          quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "course_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          passed: boolean
+          quiz_id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          passed: boolean
+          quiz_id: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          passed?: boolean
+          quiz_id?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "course_quizzes"
             referencedColumns: ["id"]
           },
         ]
@@ -426,6 +534,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          student_level: string | null
           total_points: number | null
           updated_at: string | null
           user_id: string
@@ -435,6 +544,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          student_level?: string | null
           total_points?: number | null
           updated_at?: string | null
           user_id: string
@@ -444,6 +554,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          student_level?: string | null
           total_points?: number | null
           updated_at?: string | null
           user_id?: string

@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Calendar, Star, Save, Lock } from "lucide-react";
+import { User, Mail, Calendar, Star, Save, Lock, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
-    const { user, profile, refreshProfile } = useAuth();
+    const { user, profile, refreshProfile, isAdmin } = useAuth();
     const { t } = useLanguage();
     const { toast } = useToast();
     const navigate = useNavigate();
@@ -138,13 +138,27 @@ export default function Profile() {
 
                             <div className="p-4 rounded-lg bg-secondary/50 border border-secondary">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <User className="w-4 h-4 text-secondary-foreground" />
+                                    {isAdmin ? (
+                                        <User className="w-4 h-4 text-secondary-foreground" />
+                                    ) : (
+                                        <Trophy className={`w-4 h-4 ${profile?.student_level === 'advanced' ? 'text-amber-500' :
+                                            profile?.student_level === 'intermediate' ? 'text-blue-500' :
+                                                'text-slate-400'
+                                            }`} />
+                                    )}
                                     <span className="text-sm font-medium text-muted-foreground">
-                                        {t.profile?.accountType || "Account Type"}
+                                        {isAdmin ? (t.profile?.accountType || "Account Type") : t.common.level}
                                     </span>
                                 </div>
-                                <div className="text-2xl font-bold capitalize">
-                                    {t.profile?.student || "Student"}
+                                <div className={`text-2xl font-bold capitalize ${!isAdmin && profile?.student_level === 'advanced' ? 'text-amber-600' :
+                                    !isAdmin && profile?.student_level === 'intermediate' ? 'text-blue-600' :
+                                        ''
+                                    }`}>
+                                    {isAdmin ? (t.profile?.admin || "Admin") : (
+                                        profile?.student_level === 'advanced' ? t.common.advanced :
+                                            profile?.student_level === 'intermediate' ? t.common.intermediate :
+                                                t.common.beginner
+                                    )}
                                 </div>
                             </div>
                         </div>

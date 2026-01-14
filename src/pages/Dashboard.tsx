@@ -37,7 +37,7 @@ interface PointsHistory {
 }
 
 export default function Dashboard() {
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const { t, dir, language } = useLanguage();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [recentPoints, setRecentPoints] = useState<PointsHistory[]>([]);
@@ -124,13 +124,48 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Welcome section */}
-        <div className="animate-fade-in">
-          <h1 className="text-3xl font-display font-bold mb-2">
-            {t.dashboard.welcomeBack}، {profile?.full_name?.split(" ")[0] || "Student"}!
-          </h1>
-          <p className="text-muted-foreground">
-            {t.dashboard.trackProgress}
-          </p>
+        <div className="animate-fade-in flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-display font-bold mb-2 flex items-center gap-2">
+              {t.dashboard.welcomeBack}،
+              {isAdmin ? (
+                <span className="relative inline-block group">
+                  <span className="absolute -inset-1 bg-accent/20 blur-xl rounded-full animate-pulse transition-all duration-500 group-hover:bg-accent/40 group-hover:blur-2xl" />
+                  <span className="relative bg-clip-text text-transparent bg-gradient-to-r from-accent via-white to-accent bg-[length:200%_auto] animate-shimmer font-[900] drop-shadow-[0_0_15px_rgba(251,191,36,0.6)] tracking-tight">
+                    Admin!
+                  </span>
+                </span>
+              ) : (
+                <span>{profile?.full_name?.split(" ")[0] || "Student"}!</span>
+              )}
+            </h1>
+            <p className="text-muted-foreground">
+              {t.dashboard.trackProgress}
+            </p>
+          </div>
+
+          {/* Level Badge - Hidden for Admin */}
+          {!isAdmin && profile?.student_level && (
+            <div className="flex items-center gap-3 bg-card/40 backdrop-blur-md border border-border/50 p-4 rounded-2xl shadow-glow">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${profile?.student_level === 'advanced' ? 'bg-amber-500/20 text-amber-500' :
+                profile?.student_level === 'intermediate' ? 'bg-blue-500/20 text-blue-500' :
+                  'bg-slate-500/20 text-slate-500'
+                }`}>
+                <Trophy className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{t.common.level}</p>
+                <p className={`font-bold text-lg ${profile?.student_level === 'advanced' ? 'text-amber-500' :
+                  profile?.student_level === 'intermediate' ? 'text-blue-500' :
+                    'text-slate-500'
+                  }`}>
+                  {profile?.student_level === 'advanced' ? t.common.advanced :
+                    profile?.student_level === 'intermediate' ? t.common.intermediate :
+                      t.common.beginner}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Stats cards */}
@@ -255,9 +290,8 @@ export default function Dashboard() {
                           </p>
                         </div>
                         <span
-                          className={`font-bold ${
-                            point.points > 0 ? "text-success" : "text-destructive"
-                          }`}
+                          className={`font-bold ${point.points > 0 ? "text-success" : "text-destructive"
+                            }`}
                         >
                           {point.points > 0 ? "+" : ""}
                           {point.points}

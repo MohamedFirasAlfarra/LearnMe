@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -5,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Clock, PlayCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { BookOpen, Clock, PlayCircle, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -75,10 +76,33 @@ export default function MyCourses() {
 
       if (enrollmentsError) throw enrollmentsError;
 
-      // For each enrollment, fetch sessions and attendance
+      // For each enrollment, fetch sessions, attendance, and quiz info
       const coursesWithSessions = await Promise.all(
         (enrollments || []).map(async (enrollment) => {
           let sessions: CourseSession[] = [];
+          let hasQuiz = false;
+          let quizAttempted = false;
+
+          // Check if quiz exists and if user attempted it
+          const { data: quizData } = await supabase
+            .from("course_quizzes")
+            .select("id")
+            .eq("course_id", enrollment.course_id)
+            .maybeSingle();
+
+          if (quizData) {
+            hasQuiz = true;
+            const { data: attemptData } = await supabase
+              .from("quiz_attempts")
+              .select("id")
+              .eq("quiz_id", quizData.id)
+              .eq("user_id", user?.id)
+              .maybeSingle();
+
+            if (attemptData) {
+              quizAttempted = true;
+            }
+          }
 
           if (enrollment.batch_id) {
             // Fetch course sessions for this batch
@@ -115,11 +139,13 @@ export default function MyCourses() {
             course: enrollment.courses as EnrolledCourse["course"],
             batch: enrollment.batches as EnrolledCourse["batch"],
             sessions,
+            hasQuiz,
+            quizAttempted
           };
         })
       );
 
-      setEnrolledCourses(coursesWithSessions);
+      setEnrolledCourses(coursesWithSessions as any);
     } catch (error) {
       console.error("Error fetching enrolled courses:", error);
     } finally {
@@ -206,7 +232,7 @@ export default function MyCourses() {
                           )}
                         </div>
                       </div>
-                      
+
                       {enrollment.sessions.length > 0 && (
                         <CollapsibleTrigger asChild>
                           <Button variant="ghost" size="sm">
@@ -230,6 +256,21 @@ export default function MyCourses() {
                       </div>
                       <Progress value={enrollment.progress_percentage} className="h-3" />
                     </div>
+
+                    {/* Final Quiz Button */}
+                    {(enrollment as any).hasQuiz && enrollment.progress_percentage === 100 && (
+                      <div className="mt-6">
+                        <Link to={`/quiz/${enrollment.course_id}`}>
+                          <Button
+                            className="w-full gap-2 font-bold py-6 text-lg shadow-glow"
+                            disabled={(enrollment as any).quizAttempted}
+                          >
+                            <Sparkles className="w-5 h-5 text-accent" />
+                            {(enrollment as any).quizAttempted ? t.myCourses.quizCompleted : t.myCourses.startQuiz}
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
                   </CardHeader>
 
                   {/* Sessions List */}
